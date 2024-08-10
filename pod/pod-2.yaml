@@ -1,0 +1,12 @@
+apiVersion : v1
+kind: Pod 
+metadata:
+  name: aman-pod
+  labels:
+    app: aman
+spec:
+  containers:
+    - name: aman-pod
+      image: nginx:latest
+      ports:
+        - containerPort: 80

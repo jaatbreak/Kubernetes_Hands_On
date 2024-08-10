@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-initdb-config
+  namespace: default
+data:
+  init.sql: |
+    CREATE DATABASE mydatabase;
+    CREATE USER 'test'@'%' IDENTIFIED BY 'test@123';
+    GRANT ALL PRIVILEGES ON *.* TO 'test'@'%';
+    FLUSH PRIVILEGES;
+
+  mydatabase.sql: |
+   CREATE TABLE `loginform2` (
+   `name` varchar(255) NOT NULL,
+   `email` varchar(255) NOT NULL,
+   `phone` varchar(255) NOT NULL,
+   `city` varchar(255) NOT NULL,
+   `Password` varchar(255) NOT NULL,
+   `id` int(11) NOT NULL
+   ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;

@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shopping-pod
+  labels:
+    app: nginx
+  annotations:
+    kubernetes.io/change-cause: "first v.0.1 of the application"
+
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      name: shopping-pod
+      labels:
+        app: nginx
+
+    spec:
+      containers:
+      - name: shopping-pod
+        image: amansingh12/shopping_page:latest
+        ports:
+        - containerPort: 80
+

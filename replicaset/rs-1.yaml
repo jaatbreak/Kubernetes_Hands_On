@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: ReplicaSet  
+metadata: 
+  name: aman-pod
+  labels:
+    app: aman
+
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: aman
+  template:
+    metadata:
+      name: aman-pod
+      labels:
+        app: aman
+    spec:
+      containers:
+       - name: aman-pod
+         image: nginx:latest
+         ports:
+         - containerPort: 80

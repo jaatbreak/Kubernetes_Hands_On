@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sts-1
+  labels:
+    app: sts
+
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sts
+  template:
+    metadata:
+      labels:
+        app: sts
+    spec:
+      containers:
+      - name: my-form-pod
+        image: amansingh12/form_image:2
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: form-db-1
+          mountPath: /data/db
+  volumeClaimTemplates:
+  - metadata:
+      name: form-db-1
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: demo-storage
+      resources:
+        requests:
+          storage: 500Mi
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: form-serivce
+spec:
+  selector:
+    app: sts
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 32000
+  type: NodePort
