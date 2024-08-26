@@ -1,0 +1,23 @@
+# execute inside the container 
+
+kubectl exec -it my-pod -- /bin/bash
+
+#Verify the Serice account token inside the container 
+
+cat /var/run/secrets/kubernetes.io/serviceaccount/token
+
+#Check the Service account is able to to access the pods but use the command out side the pods it will provide answer yes/no.
+
+kubectl auth can-i list pods --as=system:serviceaccount:default:my-sa
+
+#Trying to access the kkubernes cluster API 
+
+curl --header "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" \
+     --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt \
+     https://kubernetes.default.svc/api/v1/namespaces/default/pods
+
+
+# Verify by Access the logs of the pods 
+#
+ kubectl logs my-pod
+

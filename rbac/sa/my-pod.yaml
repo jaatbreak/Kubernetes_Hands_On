@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+  
+spec:
+  serviceAccount: my-sa
+  containers:
+  - name: my-pod
+    image: amansingh12/shopping_page:latest
+    ports:
+    - containerPort: 80
