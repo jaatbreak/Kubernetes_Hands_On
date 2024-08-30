@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: compute-resource
+  namespace: test
+spec:
+  hard:
+    pods: "4"                      # Corrected key (pods instead of pod)
+    requests.cpu: "1"              # 1 core CPU request
+    requests.memory: "1Gi"         # 1 GiB memory request (corrected from "1")
+    limits.cpu: "2"                # 2 cores CPU limit
+    limits.memory: "2Gi"           # 2 GiB memory limit
+
