@@ -1,0 +1,365 @@
+Kubernetes complete files :
+
+-------------------------------------
+pod file :
+--------------------------------
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+  namespace: default
+spec:
+  containers:
+  - name: nginx-pod
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+
+---------------------------------------------
+Deployment
+---------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+name: nginx-deployment
+namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx-deployment
+        image: nginx:latest
+        ports:
+        - containerPort:80
+---------------------------------------------------------
+Replicasets
+-------------------------------------------------------
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: nginx-replicaset
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx-replicaset
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+----------------------------------------------------------
+StatefulSet
+----------------------------------------------------------
+Headless-service for the stateful application 
+apiVersion: v1
+kind: Service
+metadata:
+name: headless-service
+namespace: default
+spec:
+  selector:
+    app: nginx
+  ports:
+  - port: 3306
+    targetPort: 3306
+  clusterIP: None
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-db-stateful
+  namespace: default
+
+spec:
+  replicas: 2
+  selector: 
+    matchLabels:
+      app: MySQL
+  template:
+    metadata:
+      labels:
+        app: MySQL
+    spec:
+      containers:
+      - name: mysql-db
+        image: MySQL:5.7
+        ports:
+        - containerPort: 3306
+        env:
+         - name: MYSQL_ROOT_PASSWORD  # Set root password
+          value: "rootpassword"
+        - name: MYSQL_DATABASE
+          value: "exampledb"
+      volumeMount:
+      - name: mysql-db
+        mountPath: /var/lib/MySQL
+      volumeClaimTemplates:
+      - metadata:
+          name: mysql-data
+        spec:
+          access_Modes: ['ReadWriteOnce']
+          resources:
+            requests:
+              storage: 5Gi  # Storage size per replica
+
+--------------------------------------------------------------
+DaemonSet 
+--------------------------------------------------------------
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: fluentd
+  template:
+    metadata:
+      labels:
+        app: fluentd
+    spec:
+      containers:
+      - name: fluend
+        image: fluent/fluentd:latest
+        resources:
+          limits:
+            memory: '200Mi'
+            cpu: '100m'
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainer
+          mountPath: /var/lib/docker/container
+          readOnly: true 
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainer
+        hostPath:
+          path: /var/lib/docker/container
+
+--------------------------------------------------------------------
+Jobs
+--------------------------------------------------
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hello-job
+  namespace: default
+spec:
+  completions: 1
+  parallelism: 1
+  backoffLimit: 3 #Number of try before considering the job failed
+  template:
+    metadata:
+      labels:
+        app: job
+    spec:
+      containers:
+      - name: job-hello-container
+        image: busybox:latest
+        command: ["sh", "-c", "echo hello, dosto !! && sleep 30"]
+        restartPolicy: Never 
+
+---------------------------------------------------------
+Cron Jobs
+---------------------------------------------------------
+       
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: example-cronjob
+spec:
+  schedule: "*/5 * * * *"  # Runs every 5 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: example-container
+            image: busybox:latest
+            command: ["sh", "-c", "date; echo Hello from Kubernetes CronJob!"]
+          restartPolicy: OnFailure
+  successfulJobsHistoryLimit: 3  # Keep logs of the last 3 successful runs
+  failedJobsHistoryLimit: 1      # Keep logs of the last failed run
+     # Keep logs of the last failed run
+
+------------------------------------------------------------
+Persistent Volume Creation 
+-----------------------------------------------------------
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local-pv
+spec:
+  capacity:
+    storage: 1Gi #storage size
+  accessModes:
+  - ReadWriteOnce # Access modes 
+  persistentVolumeClaimPolicy: Retain #Retain , Recycle or Delete 
+  storageClassName: manual
+  hostPath:
+    path: /mnt/data
+
+------------------------------------------------------------------
+Persistent Volume Claim
+-----------------------------------------------------------
+apiVersion: v1
+kind: persistentVolumeClaim
+metadata:
+  name: local-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: manual
+
+----------------------------------------------------
+Use This pvc to take backup of the pod the local
+----------------------------------------------------
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: nginx-pod
+  namespace: default
+  
+spec:
+  containers:
+  - name: 'nginx-pod'
+    image: latest
+    ports:
+    - containerPort: 80
+    volumeMounts:
+    - name: storage-nginx-pod
+      mountPath: /usr/share/nginx/html #Mount path inside the container 
+  volumes:
+  - name: storage-volume
+    persistentVolumeClaim:
+      claimName: 'local-pvc' #link to the pvc
+---------------------------------------------------------------
+Note : You should remember that your pv or pvc in same  namespace to use 
+if your deployment is another namespace use the same namespace to working .
+-------------------------------------------------------------
+service file 
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-nginx
+  namespace: default
+spec:
+  selector:
+    app: nginx
+  ports:
+  - protocol: TCP 
+    port: 80 # the port is using to exaccess the application 
+    targetPort:80  # this is the port of the container is running
+  type: ClusterIP
+-------------------------------------------------------------------------
+Note : the pod is runningon the cluster IP needed to port-forwarding in ec2
+
+command : sudo -E kubectl port-forward service/<service-name>  - namespace <define-custom> 80:80 --address=0.0.0.0
+
+--------------------------------------------------------------------------------------------
+Note: 
+To define and use a gp2 StorageClass for your deployment on an EKS cluster, follow these steps:
+
+* create a storage class for the gp2 
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp2
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp2
+  fsType: ext4
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+
+* Create a PersistentVolumeClaim (PVC)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: gp2
+
+here how can define inside the deployment 
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - name: my-container
+        image: nginx
+        volumeMounts:
+        - mountPath: /usr/share/nginx/html
+          name: storage-volume
+      volumes:
+      - name: storage-volume
+        persistentVolumeClaim:
+          claimName: my-pvc
+------------------------------------------------- 
+ 
+
+
+
+          
+
+
+
+    
+    
+
+
+
+
+
+ 
+
+       
+   
+   
+  
+
+
+  
+    
+    
+      
